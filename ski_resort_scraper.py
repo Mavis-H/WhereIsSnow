@@ -102,4 +102,8 @@ while True:
     state_name = state.contents[0]['id']
     resorts = state.find_next_sibling('ul').find_all('li')
     insert_ski_resort(states_dict, state_name, resorts)
+count = 0
+for value in states_dict.values():
+    count += len(value)
+print(count)
 print(states_dict)
