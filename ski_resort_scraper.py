@@ -43,7 +43,7 @@ def get_details(resort):
         return None, None, None
     else:
         resort_name = resort.find('a')['title']
-        print(resort_name)
+        # print(resort_name)
         sublink = resort.find('a')['href']
         # Page not found
         if 'redlink=1' in sublink:
@@ -68,42 +68,35 @@ def get_details(resort):
         return resort_name, coordinates, area
 
 # Insert ski area into the dictionary
-def insert_ski_resort(_states_dict, _state_name, _resorts):
+def insert_ski_resorts(states_dict, _state_name, _resorts):
     single_state_dict = {}
-    print('----------------')
-    print(_state_name)
+    # print('----------------')
+    # print(_state_name)
     for resort in _resorts:
         resort_name, coordinates, area = get_details(resort)
         if coordinates != None:
             single_state_dict[resort_name] = [coordinates, area]
-    _states_dict[_state_name] = single_state_dict
-    return _states_dict
+    states_dict[_state_name] = single_state_dict
 
-# Initialize data dictionary
-states_dict = {}
+def start_scrape():
+    # Get page from URL
+    print("START SCRAPING")
+    page = requests.get("https://en.wikipedia.org/wiki/List_of_ski_areas_and_resorts_in_the_United_States")
+    soup = BeautifulSoup(page.content, 'html.parser')
+    body = soup.find('div', class_="mw-parser-output")
 
-# Get page from URL
-page = requests.get("https://en.wikipedia.org/wiki/List_of_ski_areas_and_resorts_in_the_United_States")
+    # Start point
+    state = body.find('h2')
 
-# Scrape webpage
-soup = BeautifulSoup(page.content, 'html.parser')
- 
-# Searched for desired data
-body = soup.find('div', class_="mw-parser-output")
+    # Scrape the complete list
+    states_dict = {}
+    while True:
+        state = state.find_next_sibling('h3')
+        if state == None:
+            break
+        state_name = state.contents[0]['id'].replace('_', ' ')
+        resorts = state.find_next_sibling('ul').find_all('li')
+        insert_ski_resorts(states_dict, state_name, resorts)
+    return states_dict
 
-# Start point
-state = body.find('h2')
-
-# Scrape the complete list
-while True:
-    state = state.find_next_sibling('h3')
-    if state == None:
-        break
-    state_name = state.contents[0]['id']
-    resorts = state.find_next_sibling('ul').find_all('li')
-    insert_ski_resort(states_dict, state_name, resorts)
-count = 0
-for value in states_dict.values():
-    count += len(value)
-print(count)
-print(states_dict)
+    # resorts_count=219(218), resort_max_len=41, Tenney Mountain Ski and Snowboarding Area, state_max_len=44, ***island
