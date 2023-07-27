@@ -40,16 +40,16 @@ snow_p48h['COLOR'] = pd.cut(snow_p48h['VALUE'], bins, labels=colors)
 snow_p48h['COLOR'] = snow_p48h['COLOR'].cat.add_categories('#999999').fillna('#999999')
 print(snow_p48h)
 
-# # Create map
-# mymap = folium.Map(location=[X_MAP, Y_MAP], zoom_start=4, tiles=None)
-# folium.TileLayer('Stamen Terrain', name="Light Map", control=False).add_to(mymap)
+# Create map
+mymap = folium.Map(location=[X_MAP, Y_MAP], zoom_start=4, tiles=None)
+folium.TileLayer('Stamen Terrain', name="Light Map", control=False).add_to(mymap)
 
 # # Draw map according to data
-# myscale_p48h = (data_p48h['VALUE'].quantile((0,0.1,0.75,0.9,1))).tolist()
+# myscale_p48h = (snow_p48h['VALUE'].quantile((0,0.1,0.75,0.9,1))).tolist()
 # map_p48h = folium.Choropleth(
-#     geo_data=data_p48h,
+#     geo_data=snow_p48h,
 #     name='US Snow Map 48h',
-#     data=data_p48h,
+#     data=snow_p48h,
 #     columns=['NAME','VALUE'],
 #     key_on="feature.properties.NAME",
 #     fill_color='RdPu',
