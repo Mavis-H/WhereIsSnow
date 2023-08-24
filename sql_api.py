@@ -102,3 +102,13 @@ def get_total_rain_from_db(start_dt, end_dt):
     )
     data = cursor.fetchall()
     return data
+
+
+# Update all state name in db to use _ instead of white space
+def replace_state_name():
+    cursor.execute(
+        """
+        UPDATE resorts SET state = REPLACE(state, ' ', '_');
+        """
+    )
+    conn.commit()

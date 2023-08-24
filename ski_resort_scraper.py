@@ -78,9 +78,8 @@ def insert_ski_resorts(states_dict, _state_name, _resorts):
             single_state_dict[resort_name] = [coordinates, area]
     states_dict[_state_name] = single_state_dict
 
-def start_scrape():
+def scrape_resorts():
     # Get page from URL
-    print("START SCRAPING")
     page = requests.get("https://en.wikipedia.org/wiki/List_of_ski_areas_and_resorts_in_the_United_States")
     soup = BeautifulSoup(page.content, 'html.parser')
     body = soup.find('div', class_="mw-parser-output")
