@@ -2,9 +2,10 @@ import pandas as pd
 import numpy as np
 import geopandas as gpd
 import folium
+from folium.map import Tooltip
 from folium.plugins import TimeSliderChoropleth
-from branca.element import Figure
-import branca.colormap as cm
+from TimeSliderChoropleth import MyTimeSliderChoropleth
+from branca.colormap import LinearColormap
 import webbrowser
 from bs4 import BeautifulSoup
 import json
@@ -14,6 +15,8 @@ import json
 X_MAP = 44.58
 Y_MAP = -103.46
 MAX_DAILY_SNOWFALL = 76
+BINS = np.array([0, 20, 40, 70, 100, 150, 650])
+COLORS = ['#feebe2', '#fcc5c0', '#fa9fb5', '#f768a1', '#c51b8a', '#7a0177']
 
 
 # Get map geo dataframe
@@ -34,9 +37,7 @@ def prepare_geo_json():
 
 # Assign color and opacity to dataframe, then transfer to dictionary
 def generate_style_dict(df):
-    bins = np.array([0, 20, 40, 70, 100, 150, 650])
-    colors = ['#feebe2', '#fcc5c0', '#fa9fb5', '#f768a1', '#c51b8a', '#7a0177']
-    df['COLOR'] = pd.cut(df['VALUE'], bins, labels=colors)
+    df['COLOR'] = pd.cut(df['VALUE'], BINS, labels=COLORS)
     df['COLOR'] = df['COLOR'].cat.add_categories('#999999').fillna('#999999')
 
     style_dict = {}
@@ -70,54 +71,62 @@ def create_timeslider_choropleth(geo_json, style_dict):
     )
 
 
+# TODO: modify tooltip style and add popup
+# Draw timeslider choropleth component with extended features
+def create_interaction(df):
+    geo_df = prepare_geo_df()
+    data_df = geo_df.merge(df, how='right')
+    timestamps = data_df['DATETIME'].unique()
+    style_function_dict = {ts: {'fillColor': '#ffffff', 
+                                'color':'#000000', 
+                                'fillOpacity': 0.1, 
+                                'weight': 0.1} for ts in timestamps}
+    style_function = lambda x: style_function_dict
+    highlight_function_dict = {ts: {'fillColor': '#004560', 
+                                    'color':'#000000', 
+                                    'fillOpacity': 0.50, 
+                                    'weight': 0.1} for ts in timestamps}
+    highlight_function = lambda x: highlight_function_dict
+    # tooltip = folium.features.GeoJsonTooltip(
+    #         fields=[],
+    #         aliases=[],
+    #         style=("background-color: white; color: #333333; font-family: arial; font-size: 12px; padding: 10px;") 
+    #     )
+    tooltips = {ts: Tooltip(text="hello") for ts in timestamps}
+    return MyTimeSliderChoropleth(
+        data=data_df,
+        timestamps=timestamps,
+        style_function=style_function,
+        highlight_function=highlight_function,
+        control=False,
+        tooltips=tooltips,
+        zoom_on_click=True
+    )
+
+
 # Render map
 def render_map(mymap):
     mymap.save("map.html")
     webbrowser.open("map.html")
 
 
-# Draw map according to data
-def draw_test_map(df):
-    myscale_p48h = (df['VALUE'].quantile((0,0.1,0.75,0.9,1))).tolist()
-    map_p48h = folium.Choropleth(
+# Draw map legend using choropleth
+def create_legend(df):
+    map_legend = folium.Choropleth(
         geo_data=prepare_geo_df(),
-        name='US Snow Map 48h',
+        name='Legend',
         data=df,
         columns=['STATE','VALUE'],
         key_on="feature.properties.STATE",
         fill_color='RdPu',
-        threshold_scale=myscale_p48h,
-        fill_opacity=0.75,
-        line_opacity=0.2,
+        threshold_scale=BINS,
+        fill_opacity=0.0,
+        line_opacity=0.0,
         legend_name='Snow fall accumulation in inches',
-        smooth_factor=0,
-        nan_fill_color="Black",
         overlay=False
     )
-    return map_p48h
+    return map_legend
 
-# # Add map interaction datails
-# style_function = lambda x: {'fillColor': '#ffffff', 
-#                             'color':'#000000', 
-#                             'fillOpacity': 0.1, 
-#                             'weight': 0.1}
-# highlight_function = lambda x: {'fillColor': '#000000', 
-#                                 'color':'#000000', 
-#                                 'fillOpacity': 0.50, 
-#                                 'weight': 0.1}
-# DATA_p48h = folium.features.GeoJson(
-#     data_p48h,
-#     style_function=style_function, 
-#     control=False,
-#     highlight_function=highlight_function, 
-#     tooltip=folium.features.GeoJsonTooltip(
-#         fields=['STATE','VALUE'],
-#         aliases=['State: ','Snow fall accumulation in inches: '],
-#         style=("background-color: white; color: #333333; font-family: arial; font-size: 12px; padding: 10px;") 
-#     ),
-#     zoom_on_click=True
-# )
-# mymap.add_child(DATA_p48h)
 
 # # Add snow areas markers
 # markerGroup = folium.FeatureGroup(name='Snow Resorts and Areas').add_to(mymap)

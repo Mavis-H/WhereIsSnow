@@ -2,7 +2,7 @@ import pandas as pd
 from ski_resort_scraper import scrape_resorts
 from openweather_api import request_8d_snow_rain_forecast
 from sql_api import *
-from map import prepare_geo_json, generate_style_dict, create_map, create_timeslider_choropleth, render_map
+from map import prepare_geo_df, prepare_geo_json, generate_style_dict, create_map, create_timeslider_choropleth, create_interaction, render_map, create_legend
 
 
 ONE_DAY_SECONDS = 86400
@@ -52,7 +52,12 @@ geo_json = prepare_geo_json()
 
 # Draw map
 mymap = create_map()
-tc_component = create_timeslider_choropleth(geo_json, style_dict)
-mymap.add_child(tc_component)
+# timeslider_choropleth = create_timeslider_choropleth(geo_json, style_dict)
+# mymap.add_child(timeslider_choropleth)
+interaction = create_interaction(df)
+mymap.add_child(interaction)
+# legend = create_legend(df)
+# mymap.add_child(legend)
+
 render_map(mymap)
 
